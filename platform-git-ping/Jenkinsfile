@@ -1,0 +1,25 @@
+#!groovy
+
+// keep last 5 builds only
+// run every 15 mins
+properties([[$class: 'jenkins.model.BuildDiscarderProperty', strategy: [$class: 'LogRotator', numToKeepStr: '5', artifactNumToKeepStr: '5']],
+              pipelineTriggers([
+                [
+                  $class: 'hudson.triggers.TimerTrigger',
+                  spec  : "H/15 * * * *"
+                ]
+              ]),
+              disableConcurrentBuilds(),
+	        ])
+
+node('cm-linux') {
+  stage 'git_ping'
+    timeout(time: 1, unit: 'MINUTES'){
+			sh '''
+					resp=$(curl -L -s -o /dev/null -w "%{http_code}" -k https://alm-github.systems.uk.hsbc/banking-and-servicing)
+  					[[ $resp == "200" ]] && exit 0 || exit 1
+					
+
+				 '''
+    }
+}
